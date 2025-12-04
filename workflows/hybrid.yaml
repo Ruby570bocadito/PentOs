@@ -1,0 +1,137 @@
+name: "Workflow Híbrido Práctico-Teórico"
+description: "Workflow completo de pentesting basado en metodología híbrida"
+author: "PentOps Team"
+version: "1.0"
+
+phases:
+  # ========================================
+  # FASE 1: RECONOCIMIENTO
+  # ========================================
+  - name: "Reconocimiento y Descubrimiento"
+    description: "Identificación de puertos, servicios y tecnologías"
+    tasks:
+      - name: "Escaneo rápido de puertos"
+        module: "recon"
+        args: "--quick"
+        timeout: 300
+        critical: true
+      
+      - name: "Escaneo completo de puertos"
+        module: "recon"
+        args: "--full"
+        timeout: 600
+        critical: false
+      
+      - name: "Detección de servicios y versiones"
+        command: "nmap -sCV -p{ports} {target}"
+        timeout: 300
+        critical: false
+  
+  # ========================================
+  # FASE 2: ENUMERACIÓN
+  # ========================================
+  - name: "Enumeración de Servicios"
+    description: "Enumeración detallada de servicios detectados"
+    tasks:
+      - name: "Auto-enumeración de servicios"
+        module: "enum"
+        args: "--auto"
+        timeout: 900
+        critical: false
+      
+      - name: "Enumeración web profunda"
+        module: "enum"
+        args: "-s http"
+        timeout: 600
+        critical: false
+      
+      - name: "Enumeración SMB (si aplica)"
+        module: "enum"
+        args: "-s smb"
+        timeout: 300
+        critical: false
+        delay: 5
+  
+  # ========================================
+  # FASE 3: ANÁLISIS DE VULNERABILIDADES
+  # ========================================
+  - name: "Análisis de Vulnerabilidades"
+    description: "Identificación de vulnerabilidades potenciales"
+    tasks:
+      - name: "Escaneo de vulnerabilidades web"
+        module: "vulnscan"
+        args: "--web -p 80,443,8080"
+        timeout: 900
+        critical: false
+      
+      - name: "Scripts de vulnerabilidades Nmap"
+        module: "vulnscan"
+        args: "-p 21,22,80,443,445,3306"
+        timeout: 600
+        critical: false
+      
+      - name: "Búsqueda de exploits"
+        module: "vulnscan"
+        args: "--searchsploit"
+        timeout: 180
+        critical: false
+  
+  # ========================================
+  # FASE 4: EXPLOTACIÓN
+  # ========================================
+  - name: "Explotación"
+    description: "Intento de explotación de vulnerabilidades encontradas"
+    tasks:
+      - name: "Preparación de listener"
+        command: "echo 'Configura un listener: nc -lvnp 4444'"
+        timeout: 5
+        critical: false
+      
+      # Nota: La explotación real debe hacerse manualmente
+      # según las vulnerabilidades específicas encontradas
+      - name: "Verificación de configuración"
+        command: "echo 'Revisa los resultados de las fases anteriores antes de explotar'"
+        timeout: 5
+        critical: false
+  
+  # ========================================
+  # FASE 5: POST-EXPLOTACIÓN
+  # ========================================
+  - name: "Post-Explotación"
+    description: "Enumeración del sistema comprometido y escalación de privilegios"
+    tasks:
+      - name: "Guía de enumeración del sistema"
+        module: "postexploit"
+        args: "--enum"
+        timeout: 60
+        critical: false
+      
+      - name: "Instrucciones LinPEAS"
+        module: "postexploit"
+        args: "--linpeas"
+        timeout: 60
+        critical: false
+      
+      - name: "Instrucciones WinPEAS"
+        module: "postexploit"
+        args: "--winpeas"
+        timeout: 60
+        critical: false
+  
+  # ========================================
+  # FASE 6: DOCUMENTACIÓN
+  # ========================================
+  - name: "Documentación y Reporte"
+    description: "Generación de reporte final"
+    tasks:
+      - name: "Generar reporte HTML"
+        module: "report"
+        args: "-o html"
+        timeout: 120
+        critical: false
+      
+      - name: "Generar reporte Markdown"
+        module: "report"
+        args: "-o markdown"
+        timeout: 120
+        critical: false

@@ -1,0 +1,364 @@
+#!/usr/bin/env python3
+"""
+Utilidades compartidas para PentOps
+"""
+
+import subprocess
+import os
+import sys
+import re
+import json
+from datetime import datetime
+from config import Config
+
+
+# ==========================================
+# FUNCIONES DE OUTPUT COLORIZADO
+# ==========================================
+
+def print_banner(text):
+    """Imprime un banner"""
+    print(f"\n{Config.Colors.CYAN}{Config.Colors.BOLD}{'='*60}{Config.Colors.RESET}")
+    print(f"{Config.Colors.CYAN}{Config.Colors.BOLD}{text}{Config.Colors.RESET}")
+    print(f"{Config.Colors.CYAN}{Config.Colors.BOLD}{'='*60}{Config.Colors.RESET}\n")
+
+
+def print_success(text):
+    """Imprime mensaje de éxito"""
+    print(f"{Config.Colors.GREEN}[+] {text}{Config.Colors.RESET}")
+
+
+def print_error(text):
+    """Imprime mensaje de error"""
+    print(f"{Config.Colors.RED}[!] {text}{Config.Colors.RESET}", file=sys.stderr)
+
+
+def print_warning(text):
+    """Imprime mensaje de advertencia"""
+    print(f"{Config.Colors.YELLOW}[*] {text}{Config.Colors.RESET}")
+
+
+def print_info(text):
+    """Imprime mensaje informativo"""
+    print(f"{Config.Colors.BLUE}[i] {text}{Config.Colors.RESET}")
+
+
+def print_verbose(text):
+    """Imprime solo en modo verbose"""
+    if Config.VERBOSE:
+        print(f"{Config.Colors.MAGENTA}[v] {text}{Config.Colors.RESET}")
+
+
+# ==========================================
+# EJECUCIÓN DE COMANDOS
+# ==========================================
+
+def run_command(command, shell=True, capture_output=True, timeout=None):
+    """
+    Ejecuta un comando del sistema
+    
+    Args:
+        command: Comando a ejecutar
+        shell: Ejecutar en shell
+        capture_output: Capturar salida
+        timeout: Timeout en segundos
+    
+    Returns:
+        tuple: (exit_code, stdout, stderr)
+    """
+    print_verbose(f"Ejecutando: {command}")
+    
+    try:
+        result = subprocess.run(
+            command,
+            shell=shell,
+            capture_output=capture_output,
+            text=True,
+            timeout=timeout
+        )
+        
+        return result.returncode, result.stdout, result.stderr
+        
+    except subprocess.TimeoutExpired:
+        print_error(f"Timeout ejecutando: {command}")
+        return -1, "", "Timeout"
+    except Exception as e:
+        print_error(f"Error ejecutando comando: {str(e)}")
+        return -1, "", str(e)
+
+
+def run_command_realtime(command):
+    """
+    Ejecuta un comando y muestra la salida en tiempo real
+    
+    Args:
+        command: Comando a ejecutar
+    
+    Returns:
+        int: Exit code
+    """
+    print_verbose(f"Ejecutando (realtime): {command}")
+    
+    try:
+        process = subprocess.Popen(
+            command,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+        
+        for line in iter(process.stdout.readline, ''):
+            if line:
+                print(line.rstrip())
+        
+        process.wait()
+        return process.returncode
+        
+    except Exception as e:
+        print_error(f"Error ejecutando comando: {str(e)}")
+        return -1
+
+
+# ==========================================
+# VALIDACIÓN
+# ==========================================
+
+def validate_ip(ip):
+    """Valida una dirección IP"""
+    pattern = re.compile(r'^(\d{1,3}\.){3}\d{1,3}$')
+    if pattern.match(ip):
+        parts = ip.split('.')
+        return all(0 <= int(part) <= 255 for part in parts)
+    return False
+
+
+def validate_domain(domain):
+    """Valida un nombre de dominio"""
+    pattern = re.compile(
+        r'^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$'
+    )
+    return bool(pattern.match(domain))
+
+
+def validate_target(target):
+    """Valida que el target sea una IP o dominio válido"""
+    return validate_ip(target) or validate_domain(target)
+
+
+def validate_port(port):
+    """Valida un número de puerto"""
+    try:
+        port_num = int(port)
+        return 1 <= port_num <= 65535
+    except:
+        return False
+
+
+def validate_port_range(port_range):
+    """Valida un rango de puertos (ej: 1-1000 o 80,443,8080)"""
+    # Rango con guión
+    if '-' in port_range:
+        parts = port_range.split('-')
+        if len(parts) == 2:
+            return validate_port(parts[0]) and validate_port(parts[1])
+    
+    # Lista separada por comas
+    elif ',' in port_range:
+        ports = port_range.split(',')
+        return all(validate_port(p.strip()) for p in ports)
+    
+    # Puerto único
+    else:
+        return validate_port(port_range)
+    
+    return False
+
+
+# ==========================================
+# PARSEO DE RESULTADOS
+# ==========================================
+
+def parse_nmap_output(output):
+    """
+    Parsea la salida de nmap y extrae puertos abiertos
+    
+    Returns:
+        list: Lista de diccionarios con info de puertos
+    """
+    ports = []
+    
+    for line in output.split('\n'):
+        # Formato: 22/tcp open ssh OpenSSH 7.6p1
+        match = re.match(r'(\d+)/(tcp|udp)\s+(open|filtered|closed)\s+(\S+)\s*(.*)?', line)
+        if match:
+            port_info = {
+                'port': int(match.group(1)),
+                'protocol': match.group(2),
+                'state': match.group(3),
+                'service': match.group(4),
+                'version': match.group(5).strip() if match.group(5) else ''
+            }
+            ports.append(port_info)
+    
+    return ports
+
+
+def detect_service_from_port(port):
+    """Detecta el servicio probable basado en el puerto"""
+    for service, ports in Config.COMMON_PORTS.items():
+        if port in ports:
+            return service
+    return 'unknown'
+
+
+# ==========================================
+# FILESYST EM Y GUARDADO
+# ==========================================
+
+def save_output(target, module, filename, content):
+    """
+    Guarda la salida de un módulo
+    
+    Args:
+        target: IP o dominio objetivo
+        module: Nombre del módulo
+        filename: Nombre del archivo
+        content: Contenido a guardar
+    """
+    output_dir = Config.get_output_dir(target)
+    module_dir = output_dir / module
+    module_dir.mkdir(exist_ok=True)
+    
+    filepath = module_dir / filename
+    
+    try:
+        with open(filepath, 'w') as f:
+            f.write(content)
+        print_success(f"Guardado: {filepath}")
+        return filepath
+    except Exception as e:
+        print_error(f"Error guardando archivo: {str(e)}")
+        return None
+
+
+def save_json(target, module, filename, data):
+    """Guarda datos en formato JSON"""
+    content = json.dumps(data, indent=2, ensure_ascii=False)
+    return save_output(target, module, filename, content)
+
+
+def load_json(filepath):
+    """Carga datos desde un archivo JSON"""
+    try:
+        with open(filepath, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        print_error(f"Error cargando JSON: {str(e)}")
+        return None
+
+
+# ==========================================
+# WORDLISTS
+# ==========================================
+
+def get_wordlist(wordlist_name):
+    """
+    Obtiene la ruta de una wordlist
+    
+    Args:
+        wordlist_name: Nombre de la wordlist (ver Config.WORDLISTS)
+    
+    Returns:
+        str: Ruta de la wordlist o None
+    """
+    if wordlist_name in Config.WORDLISTS:
+        path = Config.WORDLISTS[wordlist_name]
+        if os.path.exists(path):
+            return path
+        else:
+            print_warning(f"Wordlist no encontrada: {path}")
+    
+    # Buscar en directorio de wordlists local
+    local_path = Config.WORDLISTS_DIR / wordlist_name
+    if local_path.exists():
+        return str(local_path)
+    
+    return None
+
+
+# ==========================================
+# TIEMPO Y LOGGING
+# ==========================================
+
+def get_timestamp():
+    """Obtiene timestamp actual"""
+    return datetime.now().strftime("%Y%m%d_%H%M%S")
+
+
+def log_action(target, module, action, details=""):
+    """
+    Registra una acción en el log
+    
+    Args:
+        target: Objetivo
+        module: Módulo que ejecuta la acción
+        action: Descripción de la acción
+        details: Detalles adicionales
+    """
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_entry = f"[{timestamp}] [{module}] {action}"
+    if details:
+        log_entry += f" - {details}"
+    
+    # Guardar en archivo de log
+    output_dir = Config.get_output_dir(target)
+    log_file = output_dir / "pentops.log"
+    
+    try:
+        with open(log_file, 'a') as f:
+            f.write(log_entry + '\n')
+    except:
+        pass  # Silent fail para logging
+    
+    if Config.VERBOSE:
+        print_verbose(log_entry)
+
+
+# ==========================================
+# FORMATEO DE TABLAS
+# ==========================================
+
+def print_table(headers, rows):
+    """
+    Imprime una tabla formateada
+    
+    Args:
+        headers: Lista de encabezados
+        rows: Lista de listas (filas)
+    """
+    if not rows:
+        return
+    
+    # Calcular anchos de columna
+    col_widths = [len(h) for h in headers]
+    for row in rows:
+        for i, cell in enumerate(row):
+            col_widths[i] = max(col_widths[i], len(str(cell)))
+    
+    # Imprimir encabezados
+    header_row = " | ".join(
+        f"{h:<{col_widths[i]}}" for i, h in enumerate(headers)
+    )
+    print(f"\n{Config.Colors.CYAN}{header_row}{Config.Colors.RESET}")
+    print(f"{Config.Colors.CYAN}{'-' * len(header_row)}{Config.Colors.RESET}")
+    
+    # Imprimir filas
+    for row in rows:
+        row_str = " | ".join(
+            f"{str(cell):<{col_widths[i]}}" for i, cell in enumerate(row)
+        )
+        print(row_str)
+    
+    print()  # Línea en blanco al final

@@ -1,0 +1,59 @@
+name: "Workflow Rápido CTF"
+description: "Workflow rápido para CTFs y máquinas de práctica"
+author: "PentOps Team"
+version: "1.0"
+
+phases:
+  # ========================================
+  # FASE 1: RECONOCIMIENTO RÁPIDO
+  # ========================================
+  - name: "Reconocimiento Rápido"
+    description: "Escaneo rápido inicial"
+    tasks:
+      - name: "Scan rápido con Nmap"
+        module: "recon"
+        args: "--quick"
+        timeout: 180
+        critical: true
+  
+  # ========================================
+  # FASE 2: ENUMERACIÓN AUTOMÁTICA
+  # ========================================
+  - name: "Enumeración Automática"
+    description: "Enumeración automatizada de servicios detectados"
+    tasks:
+      - name: "Auto-enumeración"
+        module: "enum"
+        args: "--auto"
+        timeout: 600
+        critical: false
+  
+  # ========================================
+  # FASE 3: VULNERABILIDADES COMUNES
+  # ========================================
+  - name: "Búsqueda de Vulnerabilidades Comunes"
+    description: "Escaneo de vulnerabilidades conocidas"
+    tasks:
+      - name: "Nikto en servicios web"
+        module: "vulnscan"
+        args: "--web"
+        timeout: 300
+        critical: false
+      
+      - name: "Searchsploit"
+        module: "vulnscan"
+        args: "--searchsploit"
+        timeout: 120
+        critical: false
+  
+  # ========================================
+  # FASE 4: REPORTE RÁPIDO
+  # ========================================
+  - name: "Documentación Rápida"
+    description: "Generar reporte básico"
+    tasks:
+      - name: "Reporte Markdown"
+        module: "report"
+        args: "-o markdown"
+        timeout: 60
+        critical: false

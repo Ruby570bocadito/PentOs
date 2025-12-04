@@ -1,0 +1,153 @@
+name: "Workflow Completo con Auto-Detección"
+description: "Workflow inteligente con auto-detección y acciones sugeridas"
+author: "PentOps Team"
+version: "2.0"
+
+phases:
+  # ========================================
+  # FASE 1: RECONOCIMIENTO INICIAL
+  # ========================================
+  - name: "Reconocimiento y Auto-Detección"
+    description: "Scan inicial con análisis inteligente"
+    tasks:
+      - name: "Scan rápido de puertos"
+        module: "recon"
+        args: "--quick"
+        timeout: 300
+        critical: true
+      
+      - name: "Auto-detección inteligente"
+        module: "autodetect"
+        args: ""
+        timeout: 180
+        critical: false
+      
+      - name: "Búsqueda en Shodan"
+        module: "api-intel"
+        args: "--shodan"
+        timeout: 120
+        critical: false
+  
+  # ========================================  
+  # FASE 2: INTELLIGENCE GATHERING
+  # ========================================
+  - name: "Recopilación de Inteligencia"
+    description: "APIs y bases de datos de seguridad"
+    tasks:
+      - name: "VirusTotal lookup"
+        module: "api-intel"
+        args: "--virustotal"
+        timeout: 60
+        critical: false
+      
+      - name: "Búsqueda de exploits conocidos"  
+        module: "api-intel"
+        args: "--exploitdb --query '{detected_service}'"
+        timeout: 120
+        critical: false
+  
+  # ========================================
+  # FASE 3: ENUMERACIÓN DIRIGIDA
+  # ========================================
+  - name: "Enumeración Basada en Detección"
+    description: "Enumeración específica según servicios detectados"
+    tasks:
+      - name: "Auto-enumeración de servicios"
+        module: "enum"
+        args: "--auto"
+        timeout: 900
+        critical: false
+      
+      - name: "Enumeración web profunda"
+        module: "enum"
+        args: "-s http"
+        timeout: 600
+        critical: false
+        delay: 10
+  
+  # ========================================
+  # FASE 4: ANÁLISIS AVANZADO DE VULNERABILIDADES
+  # ========================================
+  - name: "Análisis de Vulnerabilidades"
+    description: "Detección de vulnerabilidades con priorización"
+    tasks:
+      - name: "Escaneo web de vulnerabilidades"
+        module: "vulnscan"
+        args: "--web -p 80,443,8080"
+        timeout: 900
+        critical: false
+      
+      - name: "Scripts NSE de vulnerabilidades"
+        module: "vulnscan"
+        args: "-p all"
+        timeout: 600
+        critical: false
+      
+      - name: "Búsqueda de CVEs por versiones"
+        module: "vulnscan"
+        args: "--searchsploit"
+        timeout: 180
+        critical: false
+  
+  # ========================================
+  # FASE 5: EXPLOTACIÓN DIRIGIDA
+  # ========================================
+  - name: "Explotación según Hallazgos"
+    description: "Explotación basada en vulnerabilidades encontradas"
+    tasks:
+      - name: "Review de hallazgos críticos"
+        command: "echo 'Revisa auto-detección y selecciona exploits apropiados'"
+        timeout: 5
+        critical: false
+      
+      - name: "Preparación de listeners"
+        command: "echo 'Listener recomendado: nc -lvnp 4444'"
+        timeout: 5
+        critical: false
+  
+  # ========================================
+  # FASE 6: POST-EXPLOTACIÓN COMPLETA
+  # ========================================
+  - name: "Post-Explotación y Credential Harvesting"
+    description: "Enumeración completa y extracción de credenciales"
+    tasks:
+      - name: "Guía de enumeración del sistema"
+        module: "postexploit"
+        args: "--enum"
+        timeout: 60
+        critical: false
+      
+      - name: "Credential harvesting"
+        module: "credentials"
+        args: ""
+        timeout: 120
+        critical: false
+      
+      - name: "Instrucciones LinPEAS/WinPEAS"
+        module: "postexploit"
+        args: "--linpeas"
+        timeout: 60
+        critical: false
+  
+  # ========================================
+  # FASE 7: REPORTING AVANZADO
+  # ========================================
+  - name: "Documentación y Reporting"
+    description: "Generación de reportes profesionales"
+    tasks:
+      - name: "Reporte HTML interactivo"
+        module: "report"
+        args: "-o html"
+        timeout: 120
+        critical: false
+      
+      - name: "Reporte Markdown para documentación"
+        module: "report"
+        args: "-o markdown"
+        timeout: 120
+        critical: false
+      
+      - name: "Backup de resultados"
+        command: "echo 'Resultados guardados en results/{target}/'"
+        timeout: 5
+        critical: false

@@ -1,0 +1,5 @@
+colorama>=0.4.6
+PyYAML>=6.0
+python-nmap>=0.7.1
+requests>=2.31.0
+tqdm>=4.66.0
