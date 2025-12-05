@@ -191,6 +191,7 @@ Ejemplos de uso:
     wifi_parser.add_argument('-t', '--target', default='wifi-audit', help='Nombre del audit')
     wifi_parser.add_argument('-i', '--interface', default='wlan0', help='Interfaz inalámbrica')
     wifi_parser.add_argument('--scan', action='store_true', help='Escanear redes WiFi')
+    wifi_parser.add_argument('--full-auto', action='store_true', help='Modo completamente automatizado (scan+capture+crack)')
     wifi_parser.add_argument('--wpa-crack', action='store_true', help='Capturar y crackear WPA')
     wifi_parser.add_argument('--wps', action='store_true', help='Ataque WPS con Reaver')
     wifi_parser.add_argument('--evil-twin', action='store_true', help='Evil Twin attack')

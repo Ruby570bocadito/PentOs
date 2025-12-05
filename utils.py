@@ -50,6 +50,117 @@ def print_verbose(text):
 
 
 # ==========================================
+# ASCII ARTCOLLECTION - Simplified and properly escaped
+ASCII_ART_COLLECTION = {
+    'scan': [
+        "    SCANNING TARGET...\n    [>] Detecting services\n    [>] Identifying versions",
+        "    RECONNAISSANCE MODE\n    Gathering intelligence...\n    Mapping attack surface...",
+        "    PORT SCAN INITIATED\n    Probing network..."
+    ],
+    'enum': [
+        "    ENUMERATING SERVICES\n    [+] Extracting data\n    [+] Listing resources",
+        "    DEEP ENUMERATION\n    Analyzing services...\n    Building attack vectors...",
+        "    DATA EXTRACTION\n    Gathering credentials...\n    Mapping shares..."
+    ],
+    'exploit': [
+        "    EXPLOITATION PHASE\n    [!] Launching payload\n    [!] Executing exploit",
+        "    EXPLOIT DEPLOYED!\n    Gaining access...\n    Establishing shell...",
+        "    ATTACK EXECUTION\n    [*] Payload sent\n    [*] Waiting for callback..."
+    ],
+    'wifi': [
+        "    WiFi ATTACK MODE\n    [~] Monitoring airwaves\n    [~] Capturing handshakes",
+        "    WiFi PENETRATION\n    Deauth attack active...\n    Cracking WPA/WPA2...",
+        "    WIRELESS AUDIT\n    [!] Evil Twin deployed\n    [!] Harvesting creds"
+    ],
+    'success': [
+        "    SUCCESS!\n    Target compromised!\n    All objectives achieved",
+        "    SUCCESS\n    [OK] Exploitation successful\n    [OK] Flags captured\n    [OK] Root access obtained",
+        "    VICTORY!\n    100% COMPROMISED\n    System owned!"
+    ]
+}
+
+
+
+
+
+def get_random_ascii_art(action_type=None):
+    """
+    Retorna ASCII art aleatorio de la colección
+    
+    Args:
+        action_type: 'scan', 'enum', 'exploit', 'wifi', 'success', o None para aleatorio
+    
+    Returns:
+        str: ASCII art
+    """
+    import random
+    
+    if action_type and action_type in ASCII_ART_COLLECTION:
+        arts = ASCII_ART_COLLECTION[action_type]
+    else:
+        # Aleatorio de todas las categorías
+        all_arts = []
+        for arts_list in ASCII_ART_COLLECTION.values():
+            all_arts.extend(arts_list)
+        arts = all_arts
+    
+    return random.choice(arts) if arts else ""
+
+
+def display_action_art(action_type='scan'):
+    """
+    Muestra ASCII art con colorización según el tipo
+    
+    Args:
+        action_type: Tipo de acción (scan, enum, exploit, wifi, success)
+    """
+    art = get_random_ascii_art(action_type)
+    
+    # Colorización según tipo
+    color_map = {
+        'scan': Config.Colors.CYAN,
+        'enum': Config.Colors.BLUE,
+        'exploit': Config.Colors.RED,
+        'wifi': Config.Colors.MAGENTA,
+        'success': Config.Colors.GREEN
+    }
+    
+    color = color_map.get(action_type, Config.Colors.CYAN)
+    print(f"{color}{art}{Config.Colors.RESET}")
+
+
+# ==========================================
+# PROGRESS BAR
+# ==========================================
+
+def print_progress_bar(current, total, prefix='', suffix='', length=50, fill='█'):
+    """
+    Muestra una barra de progreso ASCII
+    
+    Args:
+        current: Progreso actual
+        total: Total de items
+        prefix: Prefijo antes de la barra
+        suffix: Sufijo después de la barra
+        length: Longitud de la barra en caracteres
+        fill: Carácter de relleno
+    """
+    percent = 100 * (current / float(total))
+    filled_length = int(length * current // total)
+    bar = fill * filled_length + '░' * (length - filled_length)
+    
+    # Formato con colores
+    print(f'\r{Config.Colors.CYAN}{prefix}{Config.Colors.RESET} '
+          f'{Config.Colors.GREEN}|{bar}|{Config.Colors.RESET} '
+          f'{Config.Colors.YELLOW}{percent:.1f}%{Config.Colors.RESET} '
+          f'{Config.Colors.CYAN}{suffix}{Config.Colors.RESET}', end='')
+    
+    # Nueva línea al completar
+    if current == total:
+        print()
+
+
+# ==========================================
 # EJECUCIÓN DE COMANDOS
 # ==========================================
 

@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 from utils import (
     print_banner, print_success, print_error, print_info, print_warning,
+    print_verbose, print_progress_bar, display_action_art,
     run_command, log_action, validate_target
 )
 from config import Config
@@ -23,6 +24,8 @@ class WorkflowEngine:
         self.dry_run = dry_run
         self.workflow_data = None
         self.output_dir = Config.get_output_dir(target)
+        self.current_progress = 0
+        self.total_tasks = 0
     
     def load_workflow(self):
         """Carga el workflow desde archivo YAML"""
@@ -67,6 +70,11 @@ class WorkflowEngine:
         args = task.get('args', '')
         timeout = task.get('timeout', 300)
         
+        # Mostrar ASCII art aleatorio para tareas importantes
+        task_type = task.get('type', 'scan')  # puede ser: scan, enum, exploit, etc
+        if task_type in ['scan', 'enum', 'exploit']:
+            display_action_art(task_type)
+        
         print_info(f"Ejecutando: {task_name}")
         
         if self.dry_run:
@@ -84,6 +92,11 @@ class WorkflowEngine:
             
             exit_code, stdout, stderr = run_command(pentops_cmd, timeout=timeout)
             
+            # Actualizar progreso
+            self.current_progress += 1
+            print_progress_bar(self.current_progress, self.total_tasks, 
+                             prefix='Progreso', suffix='Completado')
+            
             if exit_code == 0:
                 print_success(f"✓ {task_name} completado")
                 return True
@@ -100,6 +113,11 @@ class WorkflowEngine:
             cmd = cmd.replace('{output_dir}', str(self.output_dir))
             
             exit_code, stdout, stderr = run_command(cmd, timeout=timeout)
+            
+            # Actualizar progreso
+            self.current_progress += 1
+            print_progress_bar(self.current_progress, self.total_tasks,
+                             prefix='Progreso', suffix='Completado')
             
             if exit_code == 0:
                 print_success(f"✓ {task_name} completado")
@@ -142,7 +160,9 @@ class WorkflowEngine:
                 print_info(f"Esperando {delay} segundos...")
                 time.sleep(delay)
         
-        # Resumen de fase
+        # Resumen de fase con ASCII art de éxito
+        if successful > 0 and failed == 0:
+            display_action_art('success')
         print_info(f"\nFase completada: {successful} exitosas, {failed} fallidas")
         return True
     
@@ -152,6 +172,10 @@ class WorkflowEngine:
             print_error("No hay workflow cargado")
             return False
         
+        # Calcular total de tareas para barra de progreso
+        phases = self.workflow_data.get('phases', [])
+        self.total_tasks = sum(len(phase.get('tasks', [])) for phase in phases)
+        
         # Mostrar resumen
         self.display_workflow()
         
@@ -159,17 +183,17 @@ class WorkflowEngine:
             print_warning("MODO DRY-RUN: No se ejecutarán comandos reales\n")
         else:
             print_info(f"Target: {self.target}")
-            print_info(f"Resultados: {self.output_dir}\n")
+            print_info(f"Resultados: {self.output_dir}")
+            print_info(f"Total de tareas: {self.total_tasks}\n")
         
         # Log inicio
         log_action(self.target, "workflow", f"Iniciando workflow: {self.workflow_data.get('name')}")
         
         # Ejecutar fases
-        phases = self.workflow_data.get('phases', [])
-        
         for i, phase in enumerate(phases, 1):
+            percent = int((i-1) / len(phases) * 100)
             print_info(f"\n{'='*60}")
-            print_info(f"PROGRESO: Fase {i}/{len(phases)}")
+            print_info(f"PROGRESO: Fase {i}/{len(phases)} ({percent}%)")
             print_info(f"{'='*60}\n")
             
             result = self.execute_phase(phase)
@@ -179,7 +203,8 @@ class WorkflowEngine:
                 log_action(self.target, "workflow", "Workflow detenido")
                 return False
         
-        # Workflow completado
+        # Workflow completado - mostrar arte de victoria
+        display_action_art('success')
         print_banner("✓ WORKFLOW COMPLETADO ✓")
         log_action(self.target, "workflow", "Workflow completado exitosamente")
         return True
