@@ -212,13 +212,13 @@ def setup_config():
     print_info("\n=== Configuración inicial de PentOps ===\n")
     
     # Crear directorios necesarios
-    Config.RESULTS_DIR.mkdir(exist_ok=True)
+    Config.RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     print_success(f"✓ Creado directorio de resultados: {Config.RESULTS_DIR}")
     
-    Config.WORKFLOWS_DIR.mkdir(exist_ok=True)
+    Config.WORKFLOWS_DIR.mkdir(parents=True, exist_ok=True)
     print_success(f"✓ Creado directorio de workflows: {Config.WORKFLOWS_DIR}")
     
-    Config.WORDLISTS_DIR.mkdir(exist_ok=True)
+    Config.WORDLISTS_DIR.mkdir(parents=True, exist_ok=True)
     print_success(f"✓ Creado directorio de wordlists: {Config.WORDLISTS_DIR}")
     
     # Verificar herramientas

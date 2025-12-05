@@ -229,7 +229,7 @@ def save_output(target, module, filename, content):
     """
     output_dir = Config.get_output_dir(target)
     module_dir = output_dir / module
-    module_dir.mkdir(exist_ok=True)
+    module_dir.mkdir(parents=True, exist_ok=True)
     
     filepath = module_dir / filename
     
