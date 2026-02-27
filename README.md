@@ -285,24 +285,6 @@ phases:
         timeout: 180
         critical: false
 ```
-
-## ⚠️ Advertencia Legal
-
-**USO ÉTICO ÚNICAMENTE**
-
-Esta herramienta debe usarse SOLO en:
-- Entornos de laboratorio propios
-- Sistemas con autorización explícita por escrito
-- Evaluaciones de seguridad legítimas
-- CTFs y máquinas de práctica autorizadas
-
-❌ **NO USAR** para:
-- Acceder a sistemas sin autorización
-- Actividades ilegales
-- Pruebas no autorizadas
-
-El autor no se hace responsable del mal uso de esta herramienta.
-
 ## 📊 Ejemplo de Flujo Completo
 
 ```bash
@@ -323,35 +305,3 @@ python pentops.py postexploit -t 10.10.10.100 --linpeas
 # 4. Generar reporte
 python pentops.py report -t 10.10.10.100 -o html
 ```
-
-## 🤝 Contribuir
-
-Las contribuciones son bienvenidas:
-1. Fork el proyecto
-2. Crea una rama para tu feature
-3. Commit tus cambios
-4. Push a la rama
-5. Abre un Pull Request
-
-## 📝 Changelog
-
-### v1.0.0 (2025-12-04)
-- ✨ Release inicial
-- 🎯 Banner ASCII con calavera
-- 🔧 6 módulos principales
-- ⚙️ Motor de workflows con YAML
-- 📊 Reportes HTML y Markdown
-
-## 👨‍💻 Autor
-
-Desarrollado para automatizar y optimizar procesos de pentesting.
-
-## 📄 Licencia
-
-MIT License - Ver archivo LICENSE para más detalles
-
----
-
-**PentOps** - *Automated Pentesting Orchestration Tool*
-
-Para soporte o preguntas, abre un issue en GitHub.
