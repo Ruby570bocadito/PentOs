@@ -110,7 +110,7 @@ class Config:
     }
     
     @classmethod
-    def get_output_dir(cls, target):
+    def get_output_dir(cls, target: str) -> Path:
         """Obtiene el directorio de salida para un objetivo"""
         target_clean = target.replace('/', '_').replace(':', '_')
         output_dir = cls.RESULTS_DIR / target_clean
@@ -118,17 +118,17 @@ class Config:
         return output_dir
     
     @classmethod
-    def check_tool(cls, tool_name):
+    def check_tool(cls, tool_name: str) -> bool:
         """Verifica si una herramienta está instalada"""
         return shutil.which(tool_name) is not None
     
     @classmethod
-    def get_tool_path(cls, tool_name):
+    def get_tool_path(cls, tool_name: str) -> Optional[str]:
         """Obtiene la ruta de una herramienta"""
         return shutil.which(tool_name)
 
 
-def show_config():
+def show_config() -> None:
     """Muestra la configuración actual"""
     from utils import print_info, print_success, print_error
     
@@ -147,7 +147,7 @@ def show_config():
             print_error(f"✗ {tool}: No encontrado")
 
 
-def check_tools():
+def check_tools() -> bool:
     """Verifica que las herramientas necesarias estén instaladas"""
     from utils import print_info, print_success, print_error, print_warning
     
@@ -181,7 +181,7 @@ def check_tools():
     return all_ok
 
 
-def setup_config():
+def setup_config() -> None:
     """Configuración inicial de PentOps"""
     from utils import print_info, print_success
     

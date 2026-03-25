@@ -29,34 +29,34 @@ logger = logging.getLogger('pentops')
 # FUNCIONES DE OUTPUT COLORIZADO
 # ==========================================
 
-def print_banner(text):
+def print_banner(text: str) -> None:
     """Imprime un banner"""
     print(f"\n{Config.Colors.CYAN}{Config.Colors.BOLD}{'='*60}{Config.Colors.RESET}")
-    print(f"{Config.Colors.CYAN}{Config.Colors.BOLD}{text}{Config.Colors.RESET}")
-    print(f"{Config.Colors.CYAN}{Config.Colors.BOLD}{'='*60}{Config.Colors.RESET}\n")
+    print(f"\n{Config.Colors.CYAN}{Config.Colors.BOLD}{text}{Config.Colors.RESET}")
+    print(f"\n{Config.Colors.CYAN}{Config.Colors.BOLD}{'='*60}{Config.Colors.RESET}\n")
 
 
-def print_success(text):
+def print_success(text: str) -> None:
     """Imprime mensaje de éxito"""
     print(f"{Config.Colors.GREEN}[+] {text}{Config.Colors.RESET}")
 
 
-def print_error(text):
+def print_error(text: str) -> None:
     """Imprime mensaje de error"""
     print(f"{Config.Colors.RED}[!] {text}{Config.Colors.RESET}", file=sys.stderr)
 
 
-def print_warning(text):
+def print_warning(text: str) -> None:
     """Imprime mensaje de advertencia"""
     print(f"{Config.Colors.YELLOW}[*] {text}{Config.Colors.RESET}")
 
 
-def print_info(text):
+def print_info(text: str) -> None:
     """Imprime mensaje informativo"""
     print(f"{Config.Colors.BLUE}[i] {text}{Config.Colors.RESET}")
 
 
-def print_verbose(text):
+def print_verbose(text: str) -> None:
     """Imprime solo en modo verbose"""
     if Config.VERBOSE:
         print(f"{Config.Colors.MAGENTA}[v] {text}{Config.Colors.RESET}")
@@ -96,22 +96,13 @@ ASCII_ART_COLLECTION = {
 
 
 
-def get_random_ascii_art(action_type=None):
-    """
-    Retorna ASCII art aleatorio de la colección
-    
-    Args:
-        action_type: 'scan', 'enum', 'exploit', 'wifi', 'success', o None para aleatorio
-    
-    Returns:
-        str: ASCII art
-    """
+def get_random_ascii_art(action_type: Optional[str] = None) -> str:
+    """Retorna ASCII art aleatorio de la colección"""
     import random
     
     if action_type and action_type in ASCII_ART_COLLECTION:
         arts = ASCII_ART_COLLECTION[action_type]
     else:
-        # Aleatorio de todas las categorías
         all_arts = []
         for arts_list in ASCII_ART_COLLECTION.values():
             all_arts.extend(arts_list)
@@ -120,13 +111,8 @@ def get_random_ascii_art(action_type=None):
     return random.choice(arts) if arts else ""
 
 
-def display_action_art(action_type='scan'):
-    """
-    Muestra ASCII art con colorización según el tipo
-    
-    Args:
-        action_type: Tipo de acción (scan, enum, exploit, wifi, success)
-    """
+def display_action_art(action_type: str = 'scan') -> None:
+    """Muestra ASCII art con colorización según el tipo"""
     art = get_random_ascii_art(action_type)
     
     # Colorización según tipo
@@ -146,18 +132,8 @@ def display_action_art(action_type='scan'):
 # PROGRESS BAR
 # ==========================================
 
-def print_progress_bar(current, total, prefix='', suffix='', length=50, fill='█'):
-    """
-    Muestra una barra de progreso ASCII
-    
-    Args:
-        current: Progreso actual
-        total: Total de items
-        prefix: Prefijo antes de la barra
-        suffix: Sufijo después de la barra
-        length: Longitud de la barra en caracteres
-        fill: Carácter de relleno
-    """
+def print_progress_bar(current: int, total: int, prefix: str = '', suffix: str = '', length: int = 50, fill: str = '█') -> None:
+    """Muestra una barra de progreso ASCII"""
     percent = 100 * (current / float(total))
     filled_length = int(length * current // total)
     bar = fill * filled_length + '░' * (length - filled_length)
@@ -228,16 +204,8 @@ def run_command(command: str, shell: bool = True, capture_output: bool = True, t
         return -1, "", str(e)
 
 
-def run_command_realtime(command):
-    """
-    Ejecuta un comando y muestra la salida en tiempo real
-    
-    Args:
-        command: Comando a ejecutar
-    
-    Returns:
-        int: Exit code
-    """
+def run_command_realtime(command: str) -> int:
+    """Ejecuta un comando y muestra la salida en tiempo real"""
     print_verbose(f"Ejecutando (realtime): {command}")
     
     try:
@@ -272,7 +240,7 @@ def run_command_realtime(command):
 # VALIDACIÓN
 # ==========================================
 
-def validate_ip(ip):
+def validate_ip(ip: str) -> bool:
     """Valida una dirección IP"""
     pattern = re.compile(r'^(\d{1,3}\.){3}\d{1,3}$')
     if pattern.match(ip):
@@ -281,7 +249,7 @@ def validate_ip(ip):
     return False
 
 
-def validate_domain(domain):
+def validate_domain(domain: str) -> bool:
     """Valida un nombre de dominio"""
     pattern = re.compile(
         r'^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$'
@@ -289,21 +257,21 @@ def validate_domain(domain):
     return bool(pattern.match(domain))
 
 
-def validate_target(target):
+def validate_target(target: str) -> bool:
     """Valida que el target sea una IP o dominio válido"""
     return validate_ip(target) or validate_domain(target)
 
 
-def validate_port(port):
+def validate_port(port: Any) -> bool:
     """Valida un número de puerto"""
     try:
         port_num = int(port)
         return 1 <= port_num <= 65535
-    except:
+    except (ValueError, TypeError):
         return False
 
 
-def validate_port_range(port_range):
+def validate_port_range(port_range: str) -> bool:
     """Valida un rango de puertos (ej: 1-1000 o 80,443,8080)"""
     # Rango con guión
     if '-' in port_range:
@@ -327,17 +295,11 @@ def validate_port_range(port_range):
 # PARSEO DE RESULTADOS
 # ==========================================
 
-def parse_nmap_output(output):
-    """
-    Parsea la salida de nmap y extrae puertos abiertos
-    
-    Returns:
-        list: Lista de diccionarios con info de puertos
-    """
+def parse_nmap_output(output: str) -> List[Dict[str, Any]]:
+    """Parsea la salida de nmap y extrae puertos abiertos"""
     ports = []
     
     for line in output.split('\n'):
-        # Formato: 22/tcp open ssh OpenSSH 7.6p1
         match = re.match(r'(\d+)/(tcp|udp)\s+(open|filtered|closed)\s+(\S+)\s*(.*)?', line)
         if match:
             port_info = {
@@ -352,7 +314,7 @@ def parse_nmap_output(output):
     return ports
 
 
-def detect_service_from_port(port):
+def detect_service_from_port(port: int) -> str:
     """Detecta el servicio probable basado en el puerto"""
     for service, ports in Config.COMMON_PORTS.items():
         if port in ports:
@@ -364,16 +326,8 @@ def detect_service_from_port(port):
 # FILESYST EM Y GUARDADO
 # ==========================================
 
-def save_output(target, module, filename, content):
-    """
-    Guarda la salida de un módulo
-    
-    Args:
-        target: IP o dominio objetivo
-        module: Nombre del módulo
-        filename: Nombre del archivo
-        content: Contenido a guardar
-    """
+def save_output(target: str, module: str, filename: str, content: str) -> Optional[Path]:
+    """Guarda la salida de un módulo"""
     output_dir = Config.get_output_dir(target)
     module_dir = output_dir / module
     module_dir.mkdir(parents=True, exist_ok=True)
@@ -390,13 +344,13 @@ def save_output(target, module, filename, content):
         return None
 
 
-def save_json(target, module, filename, data):
+def save_json(target: str, module: str, filename: str, data: Any) -> Optional[Path]:
     """Guarda datos en formato JSON"""
     content = json.dumps(data, indent=2, ensure_ascii=False)
     return save_output(target, module, filename, content)
 
 
-def load_json(filepath):
+def load_json(filepath: str) -> Optional[Any]:
     """Carga datos desde un archivo JSON"""
     try:
         with open(filepath, 'r') as f:
@@ -410,16 +364,8 @@ def load_json(filepath):
 # WORDLISTS
 # ==========================================
 
-def get_wordlist(wordlist_name):
-    """
-    Obtiene la ruta de una wordlist con fallback
-    
-    Args:
-        wordlist_name: Nombre de la wordlist (ver Config.WORDLISTS)
-    
-    Returns:
-        str: Ruta de la wordlist o None
-    """
+def get_wordlist(wordlist_name: str) -> Optional[str]:
+    """Obtiene la ruta de una wordlist con fallback"""
     search_paths = []
     
     if wordlist_name in Config.WORDLISTS:
@@ -446,31 +392,18 @@ def get_wordlist(wordlist_name):
     return None
 
 
-# ==========================================
-# TIEMPO Y LOGGING
-# ==========================================
-
-def get_timestamp():
+def get_timestamp() -> str:
     """Obtiene timestamp actual"""
     return datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
-def log_action(target, module, action, details=""):
-    """
-    Registra una acción en el log
-    
-    Args:
-        target: Objetivo
-        module: Módulo que ejecuta la acción
-        action: Descripción de la acción
-        details: Detalles adicionales
-    """
+def log_action(target: str, module: str, action: str, details: str = "") -> None:
+    """Registra una acción en el log"""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_entry = f"[{timestamp}] [{module}] {action}"
     if details:
         log_entry += f" - {details}"
     
-    # Guardar en archivo de log
     output_dir = Config.get_output_dir(target)
     log_file = output_dir / "pentops.log"
     
@@ -478,7 +411,7 @@ def log_action(target, module, action, details=""):
         with open(log_file, 'a') as f:
             f.write(log_entry + '\n')
     except Exception:
-        pass  # Silent fail para logging
+        pass
     
     if Config.VERBOSE:
         print_verbose(log_entry)
@@ -488,14 +421,8 @@ def log_action(target, module, action, details=""):
 # FORMATEO DE TABLAS
 # ==========================================
 
-def print_table(headers, rows):
-    """
-    Imprime una tabla formateada
-    
-    Args:
-        headers: Lista de encabezados
-        rows: Lista de listas (filas)
-    """
+def print_table(headers: List[str], rows: List[List[Any]]) -> None:
+    """Imprime una tabla formateada"""
     if not rows:
         return
     
