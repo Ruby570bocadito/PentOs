@@ -179,11 +179,15 @@ def print_progress_bar(current, total, prefix='', suffix='', length=50, fill='�
 
 def run_command(command: str, shell: bool = True, capture_output: bool = True, timeout: Optional[int] = None) -> Tuple[int, str, str]:
     """
-    Ejecuta un comando del sistema
+    Ejecuta un comando del sistema.
+    
+    NOTE: shell=True es necesario para herramientas de pentesting (nmap, hydra, etc.)
+    que usan argumentos complejos en formato string. Para seguridad adicional,
+    los inputs deben ser validados en los módulos que llaman esta función.
     
     Args:
         command: Comando a ejecutar
-        shell: Ejecutar en shell
+        shell: Ejecutar en shell (default True para compatibilidad con herramientas de pentesting)
         capture_output: Capturar salida
         timeout: Timeout en segundos
     
