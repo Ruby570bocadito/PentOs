@@ -25,6 +25,13 @@ logging.basicConfig(
 logger = logging.getLogger('pentops')
 
 
+def get_logger(name: str) -> logging.Logger:
+    """Obtiene un logger configurado para el módulo especificado."""
+    mod_logger = logging.getLogger(f'pentops.{name}')
+    mod_logger.setLevel(logging.DEBUG if Config.VERBOSE else logging.INFO)
+    return mod_logger
+
+
 # ==========================================
 # FUNCIONES DE OUTPUT COLORIZADO
 # ==========================================
