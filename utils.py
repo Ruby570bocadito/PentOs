@@ -8,8 +8,21 @@ import os
 import sys
 import re
 import json
+import logging
+from pathlib import Path
 from datetime import datetime
+from typing import Optional, Tuple, List, Dict, Any
 from config import Config
+
+logging.basicConfig(
+    level=logging.DEBUG if Config.VERBOSE else logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('pentops.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger('pentops')
 
 
 # ==========================================
@@ -164,7 +177,7 @@ def print_progress_bar(current, total, prefix='', suffix='', length=50, fill='�
 # EJECUCIÓN DE COMANDOS
 # ==========================================
 
-def run_command(command, shell=True, capture_output=True, timeout=None):
+def run_command(command: str, shell: bool = True, capture_output: bool = True, timeout: Optional[int] = None) -> Tuple[int, str, str]:
     """
     Ejecuta un comando del sistema
     
@@ -178,6 +191,7 @@ def run_command(command, shell=True, capture_output=True, timeout=None):
         tuple: (exit_code, stdout, stderr)
     """
     print_verbose(f"Ejecutando: {command}")
+    logger.debug(f"Executing command: {command}")
     
     try:
         result = subprocess.run(
@@ -190,11 +204,23 @@ def run_command(command, shell=True, capture_output=True, timeout=None):
         
         return result.returncode, result.stdout, result.stderr
         
+    except FileNotFoundError:
+        cmd_name = command.split()[0] if shell else command
+        print_error(f"Comando no encontrado: {cmd_name}")
+        print_info(f"Instala la herramienta o verifica que esté en tu PATH")
+        logger.error(f"Command not found: {cmd_name}")
+        return -1, "", f"Command not found: {cmd_name}"
     except subprocess.TimeoutExpired:
         print_error(f"Timeout ejecutando: {command}")
+        logger.error(f"Command timeout: {command}")
         return -1, "", "Timeout"
+    except PermissionError:
+        print_error(f"Permiso denegado: {command}")
+        logger.error(f"Permission denied: {command}")
+        return -1, "", "Permission denied"
     except Exception as e:
         print_error(f"Error ejecutando comando: {str(e)}")
+        logger.error(f"Command error: {str(e)}")
         return -1, "", str(e)
 
 
@@ -220,13 +246,19 @@ def run_command_realtime(command):
             bufsize=1
         )
         
-        for line in iter(process.stdout.readline, ''):
+        while True:
+            line = process.stdout.readline()
+            if not line and process.poll() is not None:
+                break
             if line:
                 print(line.rstrip())
         
-        process.wait()
         return process.returncode
         
+    except FileNotFoundError:
+        cmd_name = command.split()[0] if ' ' in command else command
+        print_error(f"Comando no encontrado: {cmd_name}")
+        return -1
     except Exception as e:
         print_error(f"Error ejecutando comando: {str(e)}")
         return -1
@@ -376,7 +408,7 @@ def load_json(filepath):
 
 def get_wordlist(wordlist_name):
     """
-    Obtiene la ruta de una wordlist
+    Obtiene la ruta de una wordlist con fallback
     
     Args:
         wordlist_name: Nombre de la wordlist (ver Config.WORDLISTS)
@@ -384,17 +416,28 @@ def get_wordlist(wordlist_name):
     Returns:
         str: Ruta de la wordlist o None
     """
-    if wordlist_name in Config.WORDLISTS:
-        path = Config.WORDLISTS[wordlist_name]
-        if os.path.exists(path):
-            return path
-        else:
-            print_warning(f"Wordlist no encontrada: {path}")
+    search_paths = []
     
-    # Buscar en directorio de wordlists local
-    local_path = Config.WORDLISTS_DIR / wordlist_name
-    if local_path.exists():
-        return str(local_path)
+    if wordlist_name in Config.WORDLISTS:
+        search_paths.append(Config.WORDLISTS[wordlist_name])
+    
+    search_paths.extend([
+        Config.WORDLISTS_DIR / wordlist_name,
+        Config.WORDLISTS_DIR / f"{wordlist_name}.txt",
+        Path(f"/usr/share/wordlists/{wordlist_name}"),
+        Path(f"/usr/share/wordlists/{wordlist_name}.txt"),
+        Path(f"/usr/share/seclists/{wordlist_name}"),
+        Path(f"/usr/share/seclists/{wordlist_name}.txt"),
+    ])
+    
+    for path in search_paths:
+        if path.exists():
+            return str(path)
+    
+    print_warning(f"Wordlist no encontrada: {wordlist_name}")
+    print_info("Puedes descargar wordlists con:")
+    print("  sudo apt install wordlists")
+    print("  git clone https://github.com/danielmiessler/SecLists.git /usr/share/seclists")
     
     return None
 
@@ -430,7 +473,7 @@ def log_action(target, module, action, details=""):
     try:
         with open(log_file, 'a') as f:
             f.write(log_entry + '\n')
-    except:
+    except Exception:
         pass  # Silent fail para logging
     
     if Config.VERBOSE:

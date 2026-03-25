@@ -184,7 +184,7 @@ def run_recon(args):
     Args:
         args: Argumentos parseados de argparse
     """
-    print_banner(f"RECONOCIMIENTO: {args.target}")
+    print_info(f"Reconocimiento: {args.target}")
     
     # Validar target
     if not validate_target(args.target):
@@ -226,7 +226,7 @@ def run_recon(args):
         run_nmap_udp(args.target, output_dir)
     
     # Resumen final
-    print_banner("RECONOCIMIENTO COMPLETADO")
+    print_success("Reconocimiento completado")
     if ports:
         print_success(f"Total de puertos abiertos encontrados: {len([p for p in ports if p['state'] == 'open'])}")
         print_info(f"Revisa los resultados en: {output_dir}")

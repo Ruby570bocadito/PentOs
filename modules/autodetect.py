@@ -142,7 +142,7 @@ class AutoDetector:
     
     def analyze_target(self, scan_results):
         """Analiza resultados de scan y genera recomendaciones"""
-        print_banner("AUTO-DETECCIÓN INTELIGENTE")
+        print_info("Auto-detección inteligente")
         
         # Procesar puertos y servicios
         for port_info in scan_results:

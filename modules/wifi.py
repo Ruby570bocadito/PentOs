@@ -334,7 +334,7 @@ def run_wifi_pentest(args):
     Args:
         args: Argumentos parseados
     """
-    print_banner("AUDITORÍA DE SEGURIDAD WIFI")
+    print_info("Auditoría de seguridad WiFi")
     
     print_warning("\n╔════════════════════════════════════════════════════════╗")
     print_warning("║  ADVERTENCIA: Uso en redes autorizadas únicamente     ║")
@@ -402,7 +402,7 @@ def run_wifi_pentest(args):
         Config.get_output_dir('wifi-audit')
     )
     
-    print_banner("AUDITORÍA WIFI COMPLETADA")
+    print_success("Auditoría WiFi completada")
     print_info("Revisa los archivos generados para más detalles")
     
     log_action('wifi-audit', "wifi", "Auditoría completada")

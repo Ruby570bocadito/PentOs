@@ -388,7 +388,7 @@ def generate_report(args):
     Args:
         args: Argumentos parseados de argparse
     """
-    print_banner(f"GENERACIÓN DE REPORTE: {args.target}")
+    print_info(f"Generación de reporte: {args.target}")
     
     # Validar target
     if not validate_target(args.target):
@@ -418,5 +418,5 @@ def generate_report(args):
     else:
         print_error(f"Formato no soportado: {output_format}")
     
-    print_banner("REPORTE GENERADO")
+    print_success("Reporte generado")
     log_action(args.target, "report", f"Reporte {output_format} generado")

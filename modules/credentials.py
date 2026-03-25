@@ -234,7 +234,7 @@ def run_credential_harvest(args):
     Args:
         args: Argumentos parseados
     """
-    print_banner(f"CREDENTIAL HARVESTING: {args.target}")
+    print_info(f"Credential harvesting: {args.target}")
     
     print_warning("\n╔════════════════════════════════════════════════════════╗")
     print_warning("║  ADVERTENCIA: Uso en sistemas autorizados únicamente  ║")
@@ -268,7 +268,7 @@ def run_credential_harvest(args):
     # Generar reporte
     harvester.generate_report(output_dir)
     
-    print_banner("CREDENTIAL HARVESTING COMPLETADO")
+    print_success("Credential harvesting completado")
     print_info(f"Revisa las guías y ejecuta los comandos en el sistema comprometido")
     
     log_action(args.target, "credentials", "Credential harvesting completado")

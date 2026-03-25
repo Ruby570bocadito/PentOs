@@ -253,7 +253,7 @@ def run_api_lookup(args):
     Args:
         args: Argumentos parseados
     """
-    print_banner("BÚSQUEDA EN APIs DE SEGURIDAD")
+    print_info("Búsqueda en APIs de seguridad")
     
     integrator = APIIntegrator()
     results = {}
@@ -294,4 +294,4 @@ def run_api_lookup(args):
         save_json(args.target, "api-intel", f"api_results_{get_timestamp()}.json", results)
         print_success(f"\n✓ Resultados guardados en {output_dir}")
     
-    print_banner("BÚSQUEDA COMPLETADA")
+    print_success("Búsqueda completada")

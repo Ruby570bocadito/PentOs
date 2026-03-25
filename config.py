@@ -5,7 +5,9 @@ Configuración centralizada de PentOps
 
 import os
 import shutil
+import json
 from pathlib import Path
+from typing import Dict, Any, Optional
 
 class Config:
     """Configuración global de PentOps"""
@@ -36,25 +38,13 @@ class Config:
         BOLD = '\033[1m'
         UNDERLINE = '\033[4m'
     
-    # Herramientas de pentesting
-    TOOLS = {
-        'nmap': '/usr/bin/nmap',
-        'gobuster': '/usr/bin/gobuster',
-        'nikto': '/usr/bin/nikto',
-        'hydra': '/usr/bin/hydra',
-        'sqlmap': '/usr/bin/sqlmap',
-        'msfconsole': '/usr/bin/msfconsole',
-        'searchsploit': '/usr/bin/searchsploit',
-        'enum4linux': '/usr/bin/enum4linux',
-        'smbclient': '/usr/bin/smbclient',
-        'ftp': '/usr/bin/ftp',
-        'ssh': '/usr/bin/ssh',
-        'curl': '/usr/bin/curl',
-        'wget': '/usr/bin/wget',
-        'nc': '/usr/bin/nc',
-        'feroxbuster': '/usr/bin/feroxbuster',
-        'ffuf': '/usr/bin/ffuf',
-    }
+    # Herramientas de pentesting (nombres, rutas se detectan automáticamente)
+    TOOLS = [
+        'nmap', 'gobuster', 'nikto', 'hydra', 'sqlmap', 'msfconsole',
+        'searchsploit', 'enum4linux', 'smbclient', 'ftp', 'ssh', 'curl',
+        'wget', 'nc', 'feroxbuster', 'ffuf', 'netcat', 'impacket',
+        'responder', 'ldapsearch', 'bloodhound', 'rustscan', 'naabu',
+    ]
     
     # Wordlists comunes (actualizar según tu sistema)
     WORDLISTS = {
@@ -130,26 +120,12 @@ class Config:
     @classmethod
     def check_tool(cls, tool_name):
         """Verifica si una herramienta está instalada"""
-        if tool_name in cls.TOOLS:
-            tool_path = cls.TOOLS[tool_name]
-            return os.path.exists(tool_path)
-        
-        # Intentar encontrar en PATH
         return shutil.which(tool_name) is not None
     
     @classmethod
     def get_tool_path(cls, tool_name):
         """Obtiene la ruta de una herramienta"""
-        if tool_name in cls.TOOLS:
-            if os.path.exists(cls.TOOLS[tool_name]):
-                return cls.TOOLS[tool_name]
-        
-        # Buscar en PATH
-        path = shutil.which(tool_name)
-        if path:
-            return path
-        
-        return None
+        return shutil.which(tool_name)
 
 
 def show_config():
@@ -164,7 +140,7 @@ def show_config():
     print_info(f"Directorio de wordlists: {Config.WORDLISTS_DIR}\n")
     
     print_info("=== Herramientas Instaladas ===")
-    for tool, path in Config.TOOLS.items():
+    for tool in Config.TOOLS:
         if Config.check_tool(tool):
             print_success(f"✓ {tool}: {Config.get_tool_path(tool)}")
         else:

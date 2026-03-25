@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+eggs/
+*.egg
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# PentOps
+results/
+pentops.log
+*.log
+
+# Wordlists (grandes, mejor no trackear)
+wordlists/
+
+# OS
+.DS_Store
+Thumbs.db

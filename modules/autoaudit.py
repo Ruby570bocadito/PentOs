@@ -370,7 +370,7 @@ def run_auto_audit(args):
     Args:
         args: Argumentos parseados
     """
-    print_banner(f"INICIANDO AUTO-AUDITORÍA: {args.target}")
+    print_info(f"Iniciando auto-auditoría: {args.target}")
     
     audit = SecurityAudit(args.target)
     

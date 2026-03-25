@@ -204,7 +204,7 @@ def run_enumeration(args):
     Args:
         args: Argumentos parseados de argparse
     """
-    print_banner(f"ENUMERACIÓN: {args.target}")
+    print_info(f"Enumeración: {args.target}")
     
     # Validar target
     if not validate_target(args.target):
@@ -274,5 +274,5 @@ def run_enumeration(args):
         print_warning("Especifica --auto, -s/--service, o -p/--ports")
         print_info("Ejemplo: pentops.py enum -t 192.168.1.100 --auto")
     
-    print_banner("ENUMERACIÓN COMPLETADA")
+    print_success("Enumeración completada")
     log_action(args.target, "enumeration", "Enumeración completada")

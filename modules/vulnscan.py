@@ -88,7 +88,7 @@ def run_vulnscan(args):
     Args:
         args: Argumentos parseados de argparse
     """
-    print_banner(f"ANÁLISIS DE VULNERABILIDADES: {args.target}")
+    print_info(f"Análisis de vulnerabilidades: {args.target}")
     
     # Validar target
     if not validate_target(args.target):
@@ -121,5 +121,5 @@ def run_vulnscan(args):
         services_info = "openssh,apache,mysql"  # Ejemplo
         searchsploit_lookup(args.target, services_info, output_dir)
     
-    print_banner("ANÁLISIS DE VULNERABILIDADES COMPLETADO")
+    print_success("Análisis de vulnerabilidades completado")
     log_action(args.target, "vulnscan", "Análisis completado")
