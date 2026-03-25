@@ -8,13 +8,16 @@ import os
 from utils import (
     print_banner, print_success, print_error, print_info, print_warning,
     run_command, run_command_realtime, save_output, validate_target,
-    parse_nmap_output, log_action, print_table, get_timestamp
+    parse_nmap_output, log_action, print_table, get_timestamp, get_logger
 )
 from config import Config
+
+logger = get_logger('recon')
 
 
 def run_nmap_quick(target, output_dir):
     """Escaneo rápido de Nmap (top 1000 puertos)"""
+    logger.info(f"Iniciando scan rápido en {target}")
     print_info(f"Ejecutando scan rápido en {target}...")
     
     # Comando Nmap
